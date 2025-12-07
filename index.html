@@ -120,7 +120,7 @@
 
       <div class="grid">
         <div class="field">
-          <div class="field-label">FX rate <span>USD › CZK</span></div>
+          <div class="field-label">FX rate <span>1USD to CZK</span></div>
           <input id="rate" class="input" type="number" value="20">
         </div>
 
@@ -175,7 +175,7 @@
       <div class="grid">
         <div class="field">
           <div class="field-label">Volume <span>lots</span></div>
-          <input id="volume" class="input" type="number" step="0.0001">
+          <input id="volume" class="input" type="number" step="0.0001" value="0.01">
         </div>
 
         <div class="field">
@@ -210,17 +210,17 @@
 
         <div class="output-row">
           <span class="output-label">SL price (USD)</span>
-          <span id="slPrice" class="output-value">–</span>
+          <span id="slPrice" class="output-value">â€“</span>
         </div>
 
         <div class="output-row">
           <span class="output-label">TP price (USD)</span>
-          <span id="tpPrice" class="output-value">–</span>
+          <span id="tpPrice" class="output-value">â€“</span>
         </div>
 
         <div class="output-row">
-          <span class="output-label">P&L (CZK)</span>
-          <span id="profitCzk" class="output-value">–</span>
+          <span class="output-label">Profit (CZK)</span>
+          <span id="profitCzk" class="output-value">â€“</span>
         </div>
 
       </div>
@@ -320,17 +320,12 @@ function recalc(){
   }
 }
 
-rate.oninput = recalc;
-lev.oninput = recalc;
-op.oninput = recalc;
-cp.oninput = recalc;
-slEl.oninput = recalc;
-tpEl.oninput = recalc;
-lotSizeEl.oninput = recalc;
-pipEl.oninput = recalc;
-
-vol.oninput = ()=>{ lastInput="v"; recalc(); };
-mar.oninput = ()=>{ lastInput="m"; recalc(); };
+// registrace service workeru pro PWA
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(console.error);
+  });
+}
 
 </script>
 
