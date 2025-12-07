@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>XTBcalc</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="theme-color" content="#0f172a" />
+
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="icons/xtbcalc-192.png" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+
+  <style>
+    :root {
+      --bg: #020617;
+      --text: #e5e7eb;
+      --text-muted: #9ca3af;
+      --accent-buy: #22c55e;
+      --accent-buy-soft: rgba(34,197,94,0.15);
+      --accent-sell: #ef4444;
+      --accent-sell-soft: rgba(239,68,68,0.15);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui; }
+
+    body {
+      background: radial-gradient(circle at top, #1e293b 0, #020617 60%);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      padding: 16px;
+    }
+
+    .app {
+      width: 100%; max-width: 520px;
+      background: #020617;
+      border: 1px solid rgba(148,163,184,0.25);
+      border-radius: 24px;
+      padding: 20px;
+    }
+
+    .header { display: flex; justify-content: space-between; margin-bottom: 16px; }
+    .title { font-size: 20px; font-weight: bold; display: flex; gap: 8px; }
+
+    .badge-long {
+      background: var(--accent-buy-soft); color: var(--accent-buy);
+      border: 1px solid var(--accent-buy);
+      padding: 2px 6px; border-radius: 14px; font-size: 11px;
+    }
+    .badge-short {
+      background: var(--accent-sell-soft); color: var(--accent-sell);
+      border: 1px solid var(--accent-sell);
+      padding: 2px 6px; border-radius: 14px; font-size: 11px;
+    }
+
+    .subtitle { color: var(--text-muted); font-size: 12px; }
+
+    .section { margin-top: 18px; padding-top: 12px; border-top: 1px dashed #334155; }
+    .section-title { font-size: 12px; color: var(--text-muted); margin-bottom: 10px; }
+
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+    .field {
+      background: #0f172a;
+      border: 1px solid #1e293b;
+      border-radius: 12px;
+      padding: 6px 10px;
+    }
+    .field-label {
+      font-size: 11px; color: var(--text-muted);
+      display: flex; justify-content: space-between;
+    }
+    .input {
+      margin-top: 3px;
+      width: 100%; background: transparent; border: none;
+      color: var(--text); font-size: 14px;
+    }
+
+    .direction-toggle { display: flex; gap: 10px; }
+    .btn-dir {
+      flex: 1; padding: 7px 0; border-radius: 20px;
+      border: 1px solid #1e293b; background: #0f172a;
+      color: var(--text-muted); cursor: pointer;
+    }
+    .btn-buy.active { background: var(--accent-buy-soft); color: var(--accent-buy); border-color: var(--accent-buy); }
+    .btn-sell.active { background: var(--accent-sell-soft); color: var(--accent-sell); border-color: var(--accent-sell); }
+
+    .output-card {
+      margin-top: 12px; background: #0f172a;
+      padding: 12px; border-radius: 12px;
+      border: 1px solid #334155;
+    }
+    .output-row { display: flex; justify-content: space-between; margin: 4px 0; }
+    .output-label { font-size: 12px; color: var(--text-muted); }
+    .output-value { font-size: 15px; font-weight: 600; }
+    .positive { color: var(--accent-buy); }
+    .negative { color: var(--accent-sell); }
+
+  </style>
+</head>
+
+<body>
+  <div class="app">
+
+    <!-- HEADER -->
+    <div class="header">
+      <div>
+        <div class="title">
+          XTBcalc
+          <span id="badgeDir" class="badge-short">SHORT / SELL</span>
+        </div>
+        <div class="subtitle">Universal CFD calculator</div>
+      </div>
+    </div>
+
+    <!-- MARKET INPUTS -->
+    <div class="section">
+      <div class="section-title">Market & Account</div>
+
+      <div class="grid">
+        <div class="field">
+          <div class="field-label">FX rate <span>USD › CZK</span></div>
+          <input id="rate" class="input" type="number" value="20">
+        </div>
+
+        <div class="field">
+          <div class="field-label">Leverage</div>
+          <input id="leverage" class="input" type="number" value="20">
+        </div>
+
+        <div class="field">
+          <div class="field-label">Open price</div>
+          <input id="openPrice" class="input" type="number" step="0.01">
+        </div>
+
+        <div class="field">
+          <div class="field-label">Close price</div>
+          <input id="closePrice" class="input" type="number" step="0.01">
+        </div>
+      </div>
+    </div>
+
+    <!-- INSTRUMENT PARAMETERS -->
+    <div class="section">
+      <div class="section-title">Instrument parameters</div>
+
+      <div class="grid">
+        <div class="field">
+          <div class="field-label">Lot size</div>
+          <input id="lotSize" class="input" type="number" step="0.0001" value="100">
+        </div>
+
+        <div class="field">
+          <div class="field-label">Pip value (USD)</div>
+          <input id="pipValue" class="input" type="number" step="0.0001" value="0.01">
+        </div>
+      </div>
+    </div>
+
+    <!-- DIRECTION -->
+    <div class="section">
+      <div class="section-title">Direction</div>
+
+      <div class="direction-toggle">
+        <button id="btnLong" class="btn-dir btn-buy">LONG / BUY</button>
+        <button id="btnShort" class="btn-dir btn-sell active">SHORT / SELL</button>
+      </div>
+    </div>
+
+    <!-- VOLUME & MARGIN -->
+    <div class="section">
+      <div class="section-title">Volume & Margin</div>
+
+      <div class="grid">
+        <div class="field">
+          <div class="field-label">Volume <span>lots</span></div>
+          <input id="volume" class="input" type="number" step="0.0001">
+        </div>
+
+        <div class="field">
+          <div class="field-label">Margin <span>CZK</span></div>
+          <input id="margin" class="input" type="number" step="0.01">
+        </div>
+      </div>
+    </div>
+
+    <!-- SL / TP -->
+    <div class="section">
+      <div class="section-title">Stop loss / Take profit</div>
+
+      <div class="grid">
+        <div class="field">
+          <div class="field-label">SL <span>CZK</span></div>
+          <input id="slKc" class="input" type="number">
+        </div>
+
+        <div class="field">
+          <div class="field-label">TP <span>CZK</span></div>
+          <input id="tpKc" class="input" type="number">
+        </div>
+      </div>
+    </div>
+
+    <!-- RESULTS -->
+    <div class="section">
+      <div id="resultsDirLabel" class="section-title">Short / Sell Position</div>
+
+      <div class="output-card">
+
+        <div class="output-row">
+          <span class="output-label">SL price (USD)</span>
+          <span id="slPrice" class="output-value">–</span>
+        </div>
+
+        <div class="output-row">
+          <span class="output-label">TP price (USD)</span>
+          <span id="tpPrice" class="output-value">–</span>
+        </div>
+
+        <div class="output-row">
+          <span class="output-label">P&L (CZK)</span>
+          <span id="profitCzk" class="output-value">–</span>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+<script>
+let direction = "short";
+let lastInput = null;
+
+function g(id){ return document.getElementById(id); }
+function num(v){ return v ? parseFloat(v) : null; }
+function fmt(v){ return Number(v).toFixed(2); }
+
+const rate = g("rate");
+const lev = g("leverage");
+const op = g("openPrice");
+const cp = g("closePrice");
+const vol = g("volume");
+const mar = g("margin");
+const slEl = g("slKc");
+const tpEl = g("tpKc");
+
+const lotSizeEl = g("lotSize");
+const pipEl = g("pipValue");
+
+const slP = g("slPrice");
+const tpP = g("tpPrice");
+const czkP = g("profitCzk");
+
+g("btnLong").onclick = () => setDir("long");
+g("btnShort").onclick = () => setDir("short");
+
+function setDir(d){
+  direction = d;
+
+  g("btnLong").classList.toggle("active", d==="long");
+  g("btnShort").classList.toggle("active", d==="short");
+
+  g("badgeDir").className = d==="long" ? "badge-long" : "badge-short";
+  g("badgeDir").textContent = d==="long" ? "LONG / BUY" : "SHORT / SELL";
+
+  g("resultsDirLabel").textContent =
+    d==="long" ? "Long / Buy Position" : "Short / Sell Position";
+
+  recalc();
+}
+
+function recalc(){
+  const r = num(rate.value);
+  const l = num(lev.value);
+  const o = num(op.value);
+  const c = num(cp.value);
+  let v = num(vol.value);
+  let m = num(mar.value);
+  const ls = num(lotSizeEl.value);
+  const pip = num(pipEl.value);
+  const slK = num(slEl.value);
+  const tpK = num(tpEl.value);
+
+  if(o && r && l){
+    if(lastInput==="v" && v){
+      m = (o * v * ls * r) / l;
+      mar.value = fmt(m);
+    }
+    if(lastInput==="m" && m){
+      v = (m * l) / (o * ls * r);
+      vol.value = v.toFixed(4);
+    }
+  }
+
+  if(o && v && r && ls){
+    if(slK != null){
+      slP.textContent =
+        direction === "short"
+        ? fmt(o + Math.abs(slK)/(v*ls*r))
+        : fmt(o - Math.abs(slK)/(v*ls*r));
+    }
+
+    if(tpK != null){
+      tpP.textContent =
+        direction === "short"
+        ? fmt(o - tpK/(v*ls*r))
+        : fmt(o + tpK/(v*ls*r));
+    }
+  }
+
+  if(o && c && v && r && ls){
+    const pnl =
+      (direction==="short"
+        ? (o-c)
+        : (c-o)) * v * ls * r;
+
+    czkP.textContent = fmt(pnl);
+    czkP.className = "output-value " + (pnl >= 0 ? "positive" : "negative");
+  }
+}
+
+rate.oninput = recalc;
+lev.oninput = recalc;
+op.oninput = recalc;
+cp.oninput = recalc;
+slEl.oninput = recalc;
+tpEl.oninput = recalc;
+lotSizeEl.oninput = recalc;
+pipEl.oninput = recalc;
+
+vol.oninput = ()=>{ lastInput="v"; recalc(); };
+mar.oninput = ()=>{ lastInput="m"; recalc(); };
+
+</script>
+
+</body>
+</html>
